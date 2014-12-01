@@ -13,23 +13,34 @@
 
             if (timing) {
                 /*网络耗时*/
-                times.networkTime = timing.requestStart - timing.navigationStart;
-
-                /*后端耗时*/
-                times.backendTime = timing.responseEnd - timing.requestStart;
+                times.networkTime = timing.responseEnd - timing.fetchStart;
 
                 /*前端耗时*/
-                times.frontendTime = timing.loadEventEnd - timing.domLoading;
+                times.frontendTime = timing.loadEventEnd - timing.responseEnd;
+
+                /*页面加载总耗时*/
+                times.totalTime = timing.loadEventEnd - timing.navigationStart;
             }
-            console.log(times);
-            //console.log(timing);
+
             return times;
+        },
+
+        printTable: function (data) {
+            var table = {};
+            Object.keys(data).sort().forEach(function (i) {
+                table[i] = {
+                    ms: data[i]
+                };
+            });
+            console.table(table);
         }
 
     };
 
-    return setTimeout(function () {
-        rookie.getMainDocTimes();
-    }, 0);
+    window.onload = function () {
+        setTimeout(function () {
+            rookie.printTable(rookie.getMainDocTimes());
+        }, 0);
+    };
 
 })(this);
