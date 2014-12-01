@@ -5,10 +5,12 @@
 (function (window) {
     'use strict';
 
+    var timing = window.performance.timing;
     window.rookie = window.rookie || {
 
+        navTiming: timing,
+
         getMainDocTimes: function () {
-            var timing = window.performance.timing;
             var times = {};
 
             if (timing) {
@@ -40,6 +42,7 @@
     window.onload = function () {
         setTimeout(function () {
             rookie.printTable(rookie.getMainDocTimes());
+            rookie.printTable(rookie.navTiming);
         }, 0);
     };
 
