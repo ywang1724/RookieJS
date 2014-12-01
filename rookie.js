@@ -7,7 +7,7 @@
 
     window.rookie = window.rookie || {
 
-        getTimes: function () {
+        getMainDocTimes: function () {
             var timing = window.performance.timing;
             var times = {};
 
@@ -21,12 +21,15 @@
                 /*前端耗时*/
                 times.frontendTime = timing.loadEventEnd - timing.domLoading;
             }
-            console.table(times);
+            console.log(times);
+            //console.log(timing);
             return times;
         }
 
     };
 
-    return rookie.getTimes();
+    return setTimeout(function () {
+        rookie.getMainDocTimes();
+    }, 0);
 
 })(this);
