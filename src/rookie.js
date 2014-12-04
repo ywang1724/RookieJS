@@ -2,26 +2,46 @@
  * Rookie.js v0.0.1
  * Copyright (c) 2014 wangyi
  */
-(function (window) {
+$(window).load(function () {
     'use strict';
 
-    var timing = window.performance.timing;
-    window.rookie = window.rookie || {
-        /*主文档监测*/
-        navTiming: timing,
+    /*定义变量*/
+    var rookie = {
+        errors: []
+    };
 
-        getMainDocTimes: function () {
+    /*浏览器支持检测*/
+    if (window.performance.timing) {
+        rookie.timings = window.performance.timing;
+    } else {
+        rookie.errors.push("浏览器不支持Navigation Timing API！");
+    }
+
+    if (window.performance.getEntriesByType) {
+        rookie.resources = window.performance.getEntriesByType("resource");
+    } else {
+        rookie.errors.push("浏览器不支持Resource Timing API！");
+    }
+
+    if (rookie.timings.loadEventEnd - rookie.timings.navigationStart < 0) {
+        rookie.errors.push("页面还在加载！请加载完成后重试。");
+    }
+
+    var rookieUtils = {
+
+        /*主文档监测*/
+        getMainDocTimes: function (navTiming) {
             var times = {};
 
-            if (timing) {
+            if (times) {
                 //网络耗时
-                times.networkTime = timing.responseEnd - timing.fetchStart;
+                times.networkTime = navTiming.responseEnd - navTiming.fetchStart;
 
                 //前端耗时
-                times.frontendTime = timing.loadEventEnd - timing.responseEnd;
+                times.frontendTime = navTiming.loadEventEnd - navTiming.responseEnd;
 
                 //页面加载总耗时
-                times.totalTime = timing.loadEventEnd - timing.navigationStart;
+                times.totalTime = navTiming.loadEventEnd - navTiming.navigationStart;
             }
 
             return times;
@@ -35,27 +55,15 @@
                 };
             });
             console.table(table);
-        },
+        }
 
         /*资源监测*/
-        testBrowserCompatibility: function () {
-            /*Resource Timing*/
-            if (!('performance' in window) || !('getEntriesByType' in window.performance) ||
-                !(window.performance.getEntriesByType('resource') instanceof Array)) {
-                // API not supported
-                console.log('API not supported');
-            } else {
-                // API supported
-                console.log('API supported');
-            }
-        }
+
     };
 
-    window.onload = function () {
-        setTimeout(function () {
-            rookie.printTable(rookie.getMainDocTimes());
-            rookie.printTable(rookie.navTiming);
-        }, 0);
-    };
+    setTimeout(function () {
+        rookieUtils.printTable(rookieUtils.getMainDocTimes(rookie.timings));
+        rookieUtils.printTable(rookie.timings);
+    }, 0);
 
-})(this);
+});
