@@ -73,6 +73,7 @@ window.onload = function () {
                     index3 = resTimings[i].name.indexOf('/', 8);
                 obj.name = resTimings[i].name.substring(lastIndex + 1);
                 obj.path = resTimings[i].name.substring(index3 + 1, lastIndex);
+                obj.startTime = resTimings[i].startTime;
                 resources.push(obj);
             }
             return resources;
@@ -87,11 +88,13 @@ window.onload = function () {
         generateData: function (navTiming, resTimings) {
             var data = {
                 name: [],
-                totalTime: []
+                totalTime: [],
+                timeline: []
             };
             var mainDoc = rookieUtils.getMainDocTimes(navTiming);
             data.name.push(mainDoc.name);
             data.totalTime.push(mainDoc.totalTime);
+            data.timeline.push([0, mainDoc.totalTime]);
             for (var i = 0; i < resTimings.length; i++) {
                 var obj = {};
                 obj.totalTime = resTimings[i].duration;
@@ -101,8 +104,10 @@ window.onload = function () {
                 obj.name = resTimings[i].name.substring(lastIndex + 1);
                 obj.path = resTimings[i].name.substring(index3 + 1, lastIndex);
                 data.name.push(obj.name);
-                data.totalTime.push(obj.totalTime);
+                data.totalTime.push(Math.round(obj.totalTime));
+                data.timeline.push([Math.round(resTimings[i].startTime), Math.round(resTimings[i].startTime + obj.totalTime)]);
             }
+
             return data;
         },
 
@@ -121,16 +126,16 @@ window.onload = function () {
         },
 
         /**
-         * 瀑布流输出
+         * 条状输出
          * @param data
          */
-        drawWaterfall: function (data) {
+        drawBar: function (data) {
             $('#container').highcharts({
                 chart: {
                     type: 'bar'
                 },
                 title: {
-                    text: '页面加载瀑布流'
+                    text: '页面加载条'
                 },
                 subtitle: {
                     text: 'Beta v0.0.1'
@@ -157,7 +162,10 @@ window.onload = function () {
                 plotOptions: {
                     bar: {
                         dataLabels: {
-                            enabled: true
+                            enabled: true,
+                            formatter: function () {
+                                return this.y + ' ms';
+                            }
                         }
                     }
                 },
@@ -170,6 +178,58 @@ window.onload = function () {
                 series: [{
                     name: '总时间',
                     data: data.totalTime
+                }]
+            });
+        },
+
+        /**
+         * 时间线输出
+         * @param data
+         */
+        drawColumnRange: function (data) {
+            $('#container').highcharts({
+                chart: {
+                    type: 'columnrange',
+                    inverted: true
+                },
+                title: {
+                    text: '页面加载时间线'
+                },
+                subtitle: {
+                    text: 'Beta v0.0.1'
+                },
+                xAxis: {
+                    categories: data.name
+                },
+                yAxis: {
+                    min: 0,
+                    title: {
+                        text: '时间 (ms)',
+                        align: 'high'
+                    }
+                },
+                tooltip: {
+                    valueSuffix: ' ms'
+                },
+                plotOptions: {
+                    columnrange: {
+                        dataLabels: {
+                            enabled: true,
+                            formatter: function () {
+                                return this.y + ' ms';
+                            }
+                        }
+                    }
+                },
+                legend: {
+                    enabled: false
+                },
+                credits: {
+                    enabled: false
+                },
+                series: [{
+                    name: '总耗时',
+                    data: data.timeline
                 }]
             });
         }
@@ -190,7 +250,7 @@ window.onload = function () {
         } else {
             //rookieUtils.printTable(rookieUtils.getMainDocTimes(rookie.timings));
             //rookieUtils.printTable(rookie.timings);
-            rookieUtils.drawWaterfall(rookieUtils.generateData(rookie.timings, rookie.resources));
+            rookieUtils.drawColumnRange(rookieUtils.generateData(rookie.timings, rookie.resources));
         }
     }, 0);
 
