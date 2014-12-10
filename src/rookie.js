@@ -209,7 +209,10 @@ window.onload = function () {
                     }
                 },
                 tooltip: {
-                    valueSuffix: ' ms'
+                    formatter: function () {
+                        return '<h6>' + this.x + '</h6><br/><table><tr><td>总耗时: </td><td><b>' +
+                            (this.point.high - this.point.low) + ' ms' + '</b></td></tr></table>';
+                    }
                 },
                 plotOptions: {
                     columnrange: {
@@ -228,7 +231,7 @@ window.onload = function () {
                     enabled: false
                 },
                 series: [{
-                    name: '总耗时',
+                    name: '时间线',
                     data: data.timeline
                 }]
             });
