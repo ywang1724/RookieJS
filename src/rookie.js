@@ -110,6 +110,14 @@ window.onload = function () {
                 drilldownSeries: []
             };
 
+            /**
+             * ColumnRange data对象构造函数
+             * @param name
+             * @param low
+             * @param high
+             * @param drilldown
+             * @constructor
+             */
             function CRDataObj(name, low, high, drilldown) {
                 this.name = name || null;
                 this.low = low || 0;
@@ -117,13 +125,20 @@ window.onload = function () {
                 this.drilldown = drilldown || "";
             }
 
+            /**
+             * ColumnRange series对象构造函数
+             * @param id
+             * @param name
+             * @param data
+             * @constructor
+             */
             function CRSeriesObj(id, name, data) {
                 this.id = id || "";
                 this.name = name || null;
                 this.data = data || [];
             }
 
-            var mainDoc = rookieUtils.getMainDocTimes(navTiming);
+            var mainDoc = rookieUtils.getMainDocTimes(navTiming);   //主文档timing
             data.name.push(mainDoc.name);
             data.totalTime.push(mainDoc.totalTime);
             data.timeline.push([0, mainDoc.totalTime]);
@@ -163,8 +178,6 @@ window.onload = function () {
                 data.drilldownSeries.push(ddSeriesObj);
             }
             data.series.push(seriesObj);
-            console.log(JSON.stringify(data.series));
-            console.log(JSON.stringify(data.drilldownSeries));
             return data;
         },
 
