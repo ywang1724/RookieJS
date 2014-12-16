@@ -60,10 +60,10 @@ window.onload = function () {
                 mainDoc.ttfbTime = navTiming.responseStart - navTiming.navigationStart;
                 mainDoc.transferTime = navTiming.responseEnd - navTiming.responseStart;
 
-                mainDoc.dns = [navTiming.domainLookupStart - start, navTiming.domainLookupEnd - start];
-                mainDoc.connection = [navTiming.connectStart - start, navTiming.connectEnd - start];
-                mainDoc.ttfb = [0, navTiming.responseStart - start];
-                mainDoc.transfer = [navTiming.responseStart - start, navTiming.responseEnd - start];
+                mainDoc.dns = {low: navTiming.domainLookupStart - start, high: navTiming.domainLookupEnd - start};
+                mainDoc.connection = {low: navTiming.connectStart - start, high: navTiming.connectEnd - start};
+                mainDoc.ttfb = {low: 0, high: navTiming.responseStart - start};
+                mainDoc.transfer = {low: navTiming.responseStart - start, high: navTiming.responseEnd - start};
             }
 
             return mainDoc;
@@ -479,8 +479,8 @@ window.onload = function () {
         } else {
             //rookieUtils.printTable(rookieUtils.getMainDocTimes(rookie.timings));
             //rookieUtils.printTable(rookie.timings);
-            //rookieUtils.drawColumnRange(rookieUtils.generateData(rookie.timings, rookie.resources));
-            rookieUtils.drawCharts();
+            rookieUtils.drawColumnRange(rookieUtils.generateData(rookie.timings, rookie.resources));
+            //rookieUtils.drawCharts();
         }
     }, 0);
 
