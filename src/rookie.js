@@ -54,6 +54,7 @@ window.onload = function () {
                 mainDoc.networkTime = navTiming.responseEnd - navTiming.fetchStart;  //网络耗时
                 mainDoc.frontendTime = navTiming.loadEventEnd - navTiming.responseEnd;  //前端耗时
                 mainDoc.totalTime = navTiming.loadEventEnd - navTiming.navigationStart;  //页面加载总耗时
+
                 mainDoc.dnsTime = navTiming.domainLookupEnd - navTiming.domainLookupStart;
                 mainDoc.connectionTime = navTiming.connectEnd - navTiming.connectStart;
                 mainDoc.ttfbTime = navTiming.responseStart - navTiming.navigationStart;
@@ -85,10 +86,15 @@ window.onload = function () {
                 obj.path = resTimings[i].name.substring(index3 + 1, lastIndex);
                 obj.startTime = resTimings[i].startTime;
 
-                obj.dns = [Math.round(resTimings[i].domainLookupStart), Math.round(resTimings[i].domainLookupEnd)];
-                obj.connection = [Math.round(resTimings[i].connectStart), Math.round(resTimings[i].connectEnd)];
-                obj.ttfb = [Math.round(resTimings[i].startTime), Math.round(resTimings[i].responseStart)];
-                obj.transfer = [Math.round(resTimings[i].responseStart), Math.round(resTimings[i].responseEnd)];
+                obj.dnsTime = Math.round(resTimings[i].domainLookupEnd - resTimings[i].domainLookupStart);
+                obj.connectionTime = Math.round(resTimings[i].connectEnd - resTimings[i].connectStart);
+                obj.ttfbTime = Math.round(resTimings[i].responseStart - resTimings[i].startTime);
+                obj.transferTime = Math.round(resTimings[i].responseEnd - resTimings[i].responseStart);
+
+                obj.dns = {low: Math.round(resTimings[i].domainLookupStart), high: Math.round(resTimings[i].domainLookupEnd)};
+                obj.connection = {low: Math.round(resTimings[i].connectStart), high: Math.round(resTimings[i].connectEnd)};
+                obj.ttfb = {low: Math.round(resTimings[i].startTime), high: Math.round(resTimings[i].responseStart)};
+                obj.transfer = {low: Math.round(resTimings[i].responseStart), high: Math.round(resTimings[i].responseEnd)};
 
                 resources.push(obj);
             }
@@ -111,30 +117,35 @@ window.onload = function () {
             };
 
             /**
-             * ColumnRange data对象构造函数
+             * data对象构造函数
              * @param name
-             * @param low
-             * @param high
+             * @param number
              * @param drilldown
              * @constructor
              */
-            function CRDataObj(name, low, high, drilldown) {
-                this.name = name || null;
-                this.low = low || 0;
-                this.high = high || 0;
-                this.drilldown = drilldown || "";
+            function DataObj(name, number, drilldown) {
+                this.name = name;
+                switch (typeof number) {
+                    case "number":
+                        this.y = number;
+                        break;
+                    case "object":
+                        this.low = number.low;
+                        this.high = number.high;
+                }
+                this.drilldown = drilldown;
             }
 
             /**
-             * ColumnRange series对象构造函数
+             * series对象构造函数
              * @param id
              * @param name
              * @param data
              * @constructor
              */
-            function CRSeriesObj(id, name, data) {
-                this.id = id || "";
-                this.name = name || null;
+            function SeriesObj(id, name, data) {
+                this.id = id;
+                this.name = name;
                 this.data = data || [];
             }
 
@@ -142,13 +153,13 @@ window.onload = function () {
             data.name.push(mainDoc.name);
             data.totalTime.push(mainDoc.totalTime);
             data.timeline.push([0, mainDoc.totalTime]);
-            var seriesObj = new CRSeriesObj("", "时间线");
-            seriesObj.data.push(new CRDataObj(mainDoc.name, 0, mainDoc.totalTime, mainDoc.name));
-            var ddSeriesObjM = new CRSeriesObj(mainDoc.name);
-            ddSeriesObjM.data.push(new CRDataObj("dns", mainDoc.dns[0], mainDoc.dns[1]));
-            ddSeriesObjM.data.push(new CRDataObj("connection", mainDoc.connection[0], mainDoc.connection[1]));
-            ddSeriesObjM.data.push(new CRDataObj("ttfb", mainDoc.ttfb[0], mainDoc.ttfb[1]));
-            ddSeriesObjM.data.push(new CRDataObj("transfer", mainDoc.transfer[0], mainDoc.transfer[1]));
+            var seriesObj = new SeriesObj("", "时间线");
+            seriesObj.data.push(new DataObj(mainDoc.name, {low: 0, high: mainDoc.totalTime}, mainDoc.name));
+            var ddSeriesObjM = new SeriesObj(mainDoc.name);
+            ddSeriesObjM.data.push(new DataObj("dns", mainDoc.dns));
+            ddSeriesObjM.data.push(new DataObj("connection", mainDoc.connection));
+            ddSeriesObjM.data.push(new DataObj("ttfb", mainDoc.ttfb));
+            ddSeriesObjM.data.push(new DataObj("transfer", mainDoc.transfer));
             data.drilldownSeries.push(ddSeriesObjM);
             for (var i = 0; i < resTimings.length; i++) {
                 var obj = {};
@@ -163,18 +174,18 @@ window.onload = function () {
                 data.timeline.push([Math.round(resTimings[i].startTime), Math.round(resTimings[i].startTime + obj.totalTime)]);
                 var low = Math.round(resTimings[i].startTime),
                     high = Math.round(resTimings[i].startTime + obj.totalTime);
-                seriesObj.data.push(new CRDataObj(obj.name, low, high, obj.name));
+                seriesObj.data.push(new DataObj(obj.name, {low: low, high: high}, obj.name));
 
-                obj.dns = [Math.round(resTimings[i].domainLookupStart), Math.round(resTimings[i].domainLookupEnd)];
-                obj.connection = [Math.round(resTimings[i].connectStart), Math.round(resTimings[i].connectEnd)];
-                obj.ttfb = [Math.round(resTimings[i].startTime), Math.round(resTimings[i].responseStart)];
-                obj.transfer = [Math.round(resTimings[i].responseStart), Math.round(resTimings[i].responseEnd)];
+                obj.dns = {low: Math.round(resTimings[i].domainLookupStart), high: Math.round(resTimings[i].domainLookupEnd)};
+                obj.connection = {low: Math.round(resTimings[i].connectStart), high: Math.round(resTimings[i].connectEnd)};
+                obj.ttfb = {low: Math.round(resTimings[i].startTime), high: Math.round(resTimings[i].responseStart)};
+                obj.transfer = {low: Math.round(resTimings[i].responseStart), high: Math.round(resTimings[i].responseEnd)};
 
-                var ddSeriesObj = new CRSeriesObj(obj.name);
-                ddSeriesObj.data.push(new CRDataObj("dns", obj.dns[0], obj.dns[1]));
-                ddSeriesObj.data.push(new CRDataObj("connection", obj.connection[0], obj.connection[1]));
-                ddSeriesObj.data.push(new CRDataObj("ttfb", obj.ttfb[0], obj.ttfb[1]));
-                ddSeriesObj.data.push(new CRDataObj("transfer", obj.transfer[0], obj.transfer[1]));
+                var ddSeriesObj = new SeriesObj(obj.name);
+                ddSeriesObj.data.push(new DataObj("dns", obj.dns));
+                ddSeriesObj.data.push(new DataObj("connection", obj.connection));
+                ddSeriesObj.data.push(new DataObj("ttfb", obj.ttfb));
+                ddSeriesObj.data.push(new DataObj("transfer", obj.transfer));
                 data.drilldownSeries.push(ddSeriesObj);
             }
             data.series.push(seriesObj);
@@ -305,6 +316,151 @@ window.onload = function () {
                     series: data.drilldownSeries
                 }
             });
+        },
+
+        drawCharts: function () {
+            var chart,
+                colors = Highcharts.getOptions().colors,
+                categories = ['MSIE', 'Firefox', 'Chrome', 'Safari', 'Opera'],
+                name = 'Browser brands';
+            /*data = [{
+             y: 55.11,
+             color: colors[0],
+             drilldown: {
+             name: 'MSIE versions',
+             categories: ['MSIE 6.0', 'MSIE 7.0', 'MSIE 8.0', 'MSIE 9.0'],
+             data: [10.85, 7.35, 33.06, 2.81],
+             color: colors[0]
+             }
+             }, {
+             y: 21.63,
+             color: colors[1],
+             drilldown: {
+             name: 'Firefox versions',
+             categories: ['Firefox 2.0', 'Firefox 3.0', 'Firefox 3.5', 'Firefox 3.6', 'Firefox 4.0'],
+             data: [0.20, 0.83, 1.58, 13.12, 5.43],
+             color: colors[1]
+             }
+             }, {
+             y: 11.94,
+             color: colors[2],
+             drilldown: {
+             name: 'Chrome versions',
+             categories: ['Chrome 5.0', 'Chrome 6.0', 'Chrome 7.0', 'Chrome 8.0', 'Chrome 9.0',
+             'Chrome 10.0', 'Chrome 11.0', 'Chrome 12.0'],
+             data: [0.12, 0.19, 0.12, 0.36, 0.32, 9.91, 0.50, 0.22],
+             color: colors[2]
+             }
+             }, {
+             y: 7.15,
+             color: colors[3],
+             drilldown: {
+             name: 'Safari versions',
+             categories: ['Safari 5.0', 'Safari 4.0', 'Safari Win 5.0', 'Safari 4.1', 'Safari/Maxthon',
+             'Safari 3.1', 'Safari 4.1'],
+             data: [4.55, 1.42, 0.23, 0.21, 0.20, 0.19, 0.14],
+             color: colors[3]
+             }
+             }, {
+             y: 2.14,
+             color: colors[4],
+             drilldown: {
+             name: 'Opera versions',
+             categories: ['Opera 9.x', 'Opera 10.x', 'Opera 11.x'],
+             data: [0.12, 0.37, 1.65],
+             color: colors[4]
+             }
+             }];*/
+
+            function setChart(options) {
+                chart.series[0].remove(false);
+                chart.addSeries({
+                    type: options.type,
+                    name: options.name,
+                    data: options.data,
+                    color: options.color || 'white'
+                }, false);
+                chart.xAxis[0].setCategories(options.categories, false);
+                chart.redraw();
+            }
+
+            chart = new Highcharts.Chart({
+                chart: {
+                    renderTo: 'container'
+                },
+                title: {
+                    text: 'Browser market share, April, 2011'
+                },
+                subtitle: {
+                    text: 'Click the columns to view versions. Click again to view brands.'
+                },
+                xAxis: {
+                    categories: categories
+                },
+                yAxis: {
+                    title: {
+                        text: 'Total percent market share'
+                    }
+                },
+                plotOptions: {
+                    series: {
+                        cursor: 'pointer',
+                        point: {
+                            events: {
+                                click: function () {
+                                    var drilldown = this.drilldown;
+                                    var options;
+                                    if (drilldown) { // drill down
+                                        options = {
+                                            'name': drilldown.name,
+                                            'categories': drilldown.categories,
+                                            'data': drilldown.data,
+                                            'color': drilldown.color,
+                                            'type': 'pie'
+                                        };
+                                    } else { // restore
+                                        options = {
+                                            'name': name,
+                                            'categories': categories,
+                                            'data': data,
+                                            'type': 'column'
+                                        };
+                                    }
+                                    setChart(options);
+                                }
+                            }
+                        },
+                        dataLabels: {
+                            enabled: true,
+                            color: colors[0],
+                            style: {
+                                fontWeight: 'bold'
+                            },
+                            formatter: function () {
+                                return this.y + '%';
+                            }
+                        }
+                    }
+                },
+                tooltip: {
+                    formatter: function () {
+                        var point = this.point,
+                            s = this.x + ':<b>' + this.y + '% market share</b><br/>';
+                        if (point.drilldown) {
+                            s += 'Click to view ' + point.category + ' versions';
+                        } else {
+                            s += 'Click to return to browser brands';
+                        }
+                        return s;
+                    }
+                },
+                series: [{
+                    type: 'column',
+                    name: name,
+                    data: data,
+                    color: 'white'
+                }]
+            });
         }
 
     };
@@ -323,7 +479,8 @@ window.onload = function () {
         } else {
             //rookieUtils.printTable(rookieUtils.getMainDocTimes(rookie.timings));
             //rookieUtils.printTable(rookie.timings);
-            rookieUtils.drawColumnRange(rookieUtils.generateData(rookie.timings, rookie.resources));
+            //rookieUtils.drawColumnRange(rookieUtils.generateData(rookie.timings, rookie.resources));
+            rookieUtils.drawCharts();
         }
     }, 0);
 
