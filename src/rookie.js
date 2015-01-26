@@ -280,5 +280,4 @@ window.onload = function () {
             rookieUtils.drawColumnRange(rookieUtils.generateData(rookie.timings, rookie.resources));
         }
     }, 0);
-//just for test github shell problem
 };
